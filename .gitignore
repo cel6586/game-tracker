@@ -1,0 +1,13 @@
+# Python virtual environments
+.venv/
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
