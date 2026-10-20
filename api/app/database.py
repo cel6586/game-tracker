@@ -1,5 +1,5 @@
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
 
@@ -16,9 +16,11 @@ engine = create_engine(settings.database_url, pool_pre_ping=True)
 session_factory = sessionmaker(bind=engine)
 
 class Model(DeclarativeBase):
+    """ root for all models """
     metadata = MetaData(naming_convention=convention)
 
 def get_db():
+    """ Retrieves database session """
     db = session_factory()
     try:
         yield db

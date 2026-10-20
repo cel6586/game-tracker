@@ -1,12 +1,13 @@
-from datetime import datetime, date
+from datetime import date, datetime
 
-from sqlalchemy import DateTime, String, func, UniqueConstraint, ForeignKey, Text
+from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Model
 
 
 class User(Model):
+    """ Model for our users table """
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -18,9 +19,12 @@ class User(Model):
 
 
 class Game(Model):
+    """ Model for our video games table. Video games will be assigned to a user
+     From the User table """
     __tablename__ = "games"
     __table_args__ = (
-        UniqueConstraint("user_id", "title", "platform", name="uq_games_user_title_platform"),
+        UniqueConstraint("user_id", "title", "platform",
+                         name="uq_games_user_title_platform"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
