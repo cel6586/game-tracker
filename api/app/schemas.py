@@ -60,6 +60,19 @@ class UserCreate(BaseModel):
     name: str | None = None
 
 
+class UserUpdate(BaseModel):
+    """ Schema for updating an existing user email and name """
+    email: EmailStr | None = None
+    name: str | None = None
+
+    @field_validator("email")
+    @classmethod
+    def not_null(cls, value):
+        if value is None:
+            raise ValueError("Email cannot be null")
+        return value
+
+
 class UserOutput(BaseModel):
     """ Returned output after creating a new user """
     model_config = ConfigDict(from_attributes=True)
