@@ -1,0 +1,17 @@
+# secrets
+.env
+
+# local Python environment and generated files
+.venv
+__pycache__
+*.pyc
+
+# dev tooling
+.ruff_cache
+.pytest_cache
+requirements-dev.txt
+ruff.toml
+
+# not needed inside the image
+Dockerfile
+.dockerignore

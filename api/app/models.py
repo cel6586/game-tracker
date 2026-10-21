@@ -1,6 +1,15 @@
 from datetime import date, datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    false,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Model
@@ -39,6 +48,7 @@ class Game(Model):
     rating: Mapped[float | None]
     notes: Mapped[str | None] = mapped_column(Text)
     link: Mapped[str | None] = mapped_column(String(500))
+    favorite: Mapped[bool] = mapped_column(Boolean, server_default=false())
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

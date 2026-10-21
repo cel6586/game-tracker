@@ -1,8 +1,8 @@
-"""create users and games tables
+"""Generate games and users table
 
-Revision ID: aa2ae4608646
+Revision ID: f922356fe5e4
 Revises: 
-Create Date: 2026-10-19 10:18:09.016673
+Create Date: 2026-10-20 15:43:39.268629
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'aa2ae4608646'
+revision: str = 'f922356fe5e4'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,6 +41,7 @@ def upgrade() -> None:
     sa.Column('rating', sa.Double(), nullable=True),
     sa.Column('notes', sa.Text(), nullable=True),
     sa.Column('link', sa.String(length=500), nullable=True),
+    sa.Column('favorite', sa.Boolean(), server_default=sa.text('false'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_games_user_id_users'), ondelete='CASCADE'),

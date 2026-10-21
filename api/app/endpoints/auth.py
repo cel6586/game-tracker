@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.schemas import UserCreate, UserOutput
-from app.security import create_token, get_current_user, hash_password, verify_password
+from app.security import create_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -23,7 +23,6 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="User already exists")
-    db.commit()
     db.refresh(user)
     return user
 
@@ -35,8 +34,3 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(),
     if user is None or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     return {"access_token": create_token(user.id), "token_type": "bearer"}
-
-@router.get("/me", response_model=UserOutput)
-def user_details(user = Depends(get_current_user)):
-    """ Returns the current user's details """
-    return user

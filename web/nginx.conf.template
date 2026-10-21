@@ -1,0 +1,47 @@
+# The official nginx image fills in ${API_UPSTREAM}
+
+server {
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    server_tokens off;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+    # Content-Security-Policy comes after fonts are self-hosted.
+
+    # Browser -> nginx -> API. The browser only talks to this one address, so no CORS.
+    # No path after ${API_UPSTREAM}, so /api/v1/games/ is forwarded unchanged.
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Kubernetes/Docker health probe target.
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Short cache so edits show up quickly.
+    location ~* \.(css|js|svg|png|jpg|woff2)$ {
+        expires 5m;
+        add_header Cache-Control "public";
+        # add_header in a location replaces the server-level ones, so repeat them here.
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "no-referrer" always;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
