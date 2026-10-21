@@ -3,12 +3,13 @@
 // GET /games/); the counts come from GET /games/summary. Only the grouping into
 // sections happens here, because that's just how the list is shown.
 
+import { getCachedUser } from "./auth.js";
 import { deleteGame, getGameSummary, listGames, updateGame } from "./api.js";
 import { confirmDialog, openGameDialog } from "./dialogs.js";
 import { errorMessage } from "./login.js";
 import {
   PLATFORMS, STATUSES, capitalize, countdownText, daysUntil, el, formatDate, formatRating,
-  icon, isSafeUrl, platformBadge, platformInfo, platformTile,
+  icon, isSafeUrl, listTitle, platformBadge, platformInfo, platformTile,
 } from "./util.js";
 
 const DEFAULT_FILTERS = { search: "", status: "", platform: "", outNow: false, favorites: false };
@@ -92,7 +93,7 @@ export async function renderList(container) {
     el("thead", {}, el("tr", {}, ...["Title", "Status", "Release", "Rating", ""].map((text) => el("th", { text })))));
 
   container.replaceChildren(
-    el("div", { className: "page-header" }, el("h1", { text: "My List" }), addButton),
+    el("div", { className: "page-header" }, el("h1", { text: listTitle(getCachedUser()), attrs: { id: "list-title" } }), addButton),
     banner, chips, toolbar, jump,
     el("div", { className: "list-scroll" }, el("div", { className: "list-inner" }, listHead, groups)));
 

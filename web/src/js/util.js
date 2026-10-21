@@ -143,3 +143,23 @@ export function icon(name, filled = false, size = 18) {
   svg.append(path);
   return svg;
 }
+
+// "Craig's List", or "My List" when the user has no name saved.
+export function listTitle(user) {
+  const name = user?.name?.trim();
+  if (!name) return "My List";
+  return `${name}${name.endsWith("s") ? "'" : "'s"} List`;
+}
+
+// Updates everything on screen that shows who is signed in (sidebar name + email, list title).
+export function showUser(user) {
+  const nameBox = document.querySelector(".user-name");
+  if (nameBox) {
+    nameBox.textContent = user?.name || "";
+    nameBox.hidden = !user?.name;
+  }
+  const emailBox = document.querySelector(".user-email");
+  if (emailBox) emailBox.textContent = user?.email || "";
+  const title = document.getElementById("list-title");
+  if (title) title.textContent = listTitle(user);
+}

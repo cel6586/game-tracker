@@ -6,7 +6,7 @@ import { getCachedUser, isSignedIn, logout, setCachedUser } from "./auth.js";
 import { renderList } from "./list.js";
 import { renderLogin } from "./login.js";
 import { applyTheme, renderSettings } from "./settings.js";
-import { el, icon } from "./util.js";
+import { el, icon, showUser } from "./util.js";
 
 const root = document.getElementById("root");
 
@@ -16,7 +16,10 @@ function renderShell(activeRoute) {
     el("a", { className: route === activeRoute ? "nav-item active" : "nav-item", attrs: { href, "aria-current": route === activeRoute ? "page" : false } },
       icon(iconName, false, 20), text);
 
-  const email = el("div", { className: "user-email", text: getCachedUser()?.email || "" });
+  const cached = getCachedUser();
+  const userName = el("div", { className: "user-name", text: cached?.name || "", attrs: { hidden: !cached?.name } });
+  const email = el("div", { className: "user-email", text: cached?.email || "" });
+  const who = el("div", { className: "user-info" }, userName, email);
   const signOut = el("button", { className: "btn icon-btn", attrs: { type: "button", "aria-label": "Sign out" } }, icon("logout", false, 20));
   signOut.addEventListener("click", logout);
 
@@ -25,11 +28,11 @@ function renderShell(activeRoute) {
     link("#/list", "My List", "list", "list"),
     link("#/settings", "Settings", "settings", "settings"),
     el("span", { className: "nav-item disabled", attrs: { "aria-disabled": "true" } }, icon("users", false, 20), "Browse lists", el("span", { className: "nav-later", text: "Later" })),
-    el("div", { className: "sidebar-bottom" }, email, signOut));
+    el("div", { className: "sidebar-bottom" }, who, signOut));
 
   const main = el("main", { className: "main" });
   root.replaceChildren(el("div", { className: "app" }, sidebar, main));
-  return { main, email };
+  return { main };
 }
 
 async function route() {
@@ -50,7 +53,7 @@ async function route() {
     return;
   }
   const screen = name;
-  const { main, email } = renderShell(screen);
+  const { main } = renderShell(screen);
   if (screen === "settings") renderSettings(main);
   else renderList(main);
 
@@ -61,7 +64,7 @@ async function route() {
       const user = await getMe();
       setCachedUser(user);
       if (!main.isConnected) return; // user navigated away while we waited
-      email.textContent = user.email;
+      showUser(user);
       // Fill in the settings email box without re-rendering, so nothing the user typed is lost.
       const emailInput = document.getElementById("s-email");
       if (emailInput && !emailInput.value) emailInput.value = user.email;

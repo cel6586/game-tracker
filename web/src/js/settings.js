@@ -5,7 +5,7 @@ import { changePassword, deleteMe, updateMe } from "./api.js";
 import { clearToken, getCachedUser, setCachedUser } from "./auth.js";
 import { confirmDialog } from "./dialogs.js";
 import { errorMessage } from "./login.js";
-import { el } from "./util.js";
+import { el, showUser } from "./util.js";
 
 const THEME_KEY = "gt_theme";
 const THEMES = [["dark", "Dark"], ["midnight", "Midnight"], ["light", "Light"]];
@@ -63,8 +63,7 @@ function accountSection() {
       // A blank name is sent as null so it clears the saved one.
       const updated = await updateMe({ name: name.input.value.trim() || null, email: email.input.value });
       setCachedUser(updated);
-      const sidebarEmail = document.querySelector(".user-email");
-      if (sidebarEmail) sidebarEmail.textContent = updated.email;
+      showUser(updated);
       message.show("Account updated.", false);
     } catch (error) {
       message.show(errorMessage(error), true); // includes the 409 "email already exists"
