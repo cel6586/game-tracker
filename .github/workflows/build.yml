@@ -1,0 +1,32 @@
+name: Build and push images
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          push: true
+          tags: ghcr.io/cel6586/game-tracker-api:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          tags: ghcr.io/cel6586/game-tracker-web:${{ github.sha }}
