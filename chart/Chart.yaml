@@ -1,0 +1,5 @@
+apiVersion: v2
+name: game-tracker
+description: Tracks games wishlist
+version: 0.1.0
+appVersion: "1.0"
