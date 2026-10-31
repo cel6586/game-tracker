@@ -1,0 +1,10 @@
+image:
+  tag: f39c1cba5ec97ab16e509354718c33afc57f2264
+
+api:
+  image: ghcr.io/cel6586/game-tracker-api
+  replicas: 2
+
+web:
+  image: ghcr.io/cel6586/game-tracker-web
+  replicas: 2

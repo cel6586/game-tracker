@@ -51,3 +51,13 @@ jobs:
           context: ./web
           push: true
           tags: ghcr.io/cel6586/game-tracker-web:${{ github.sha }}
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, homelab]
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          helm upgrade --install game-tracker chart --namespace game-tracker \
+          --create-namespace --set image.tag=${{ github.sha }} --wait

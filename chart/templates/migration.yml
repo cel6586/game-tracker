@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate-db
+  namespace: game-tracker
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: migrate-db
+          image: {{ .Values.api.image }}:{{ .Values.image.tag }}
+          command: ["alembic", "upgrade", "head"]
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: game-tracker-secrets
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: postgresql+psycopg://gtadmin:$(POSTGRES_PASSWORD)@db:5432/gametracker
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: game-tracker-secrets
+                  key: SECRET_KEY
