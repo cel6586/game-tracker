@@ -59,7 +59,7 @@ jobs:
           context: ./api
           load: true
           tags: ghcr.io/cel6586/game-tracker-api:${{ github.sha }}
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ghcr.io/cel6586/game-tracker-api:${{ github.sha }}
           severity: HIGH,CRITICAL
@@ -71,7 +71,7 @@ jobs:
           context: ./web
           load: true
           tags: ghcr.io/cel6586/game-tracker-web:${{ github.sha }}
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ghcr.io/cel6586/game-tracker-web:${{ github.sha }}
           severity: HIGH,CRITICAL
