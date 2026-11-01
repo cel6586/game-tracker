@@ -28,8 +28,20 @@ jobs:
       - run: ruff check .
         working-directory: api
 
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
   build:
-    needs: test
+    needs: [test, secret-scan]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -41,6 +53,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # builds image and does a trivy check
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          load: true
+          tags: ghcr.io/cel6586/game-tracker-api:${{ github.sha }}
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/cel6586/game-tracker-api:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          load: true
+          tags: ghcr.io/cel6586/game-tracker-web:${{ github.sha }}
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/cel6586/game-tracker-web:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
+      # Pushes image
       - uses: docker/build-push-action@v6
         with:
           context: ./api
