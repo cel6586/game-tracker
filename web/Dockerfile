@@ -2,6 +2,8 @@ FROM nginx:1.30-alpine
 
 ENV API_UPSTREAM=http://api:8000
 
+RUN apk upgrade --no-cache
+
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY src/ /usr/share/nginx/html/
 
