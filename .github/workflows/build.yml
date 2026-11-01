@@ -54,7 +54,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # builds image and does a trivy check
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ./api
           load: true
@@ -66,7 +66,7 @@ jobs:
           ignore-unfixed: true
           exit-code: 1
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ./web
           load: true
@@ -79,12 +79,12 @@ jobs:
           exit-code: 1
 
       # Pushes image
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ./api
           push: true
           tags: ghcr.io/cel6586/game-tracker-api:${{ github.sha }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ./web
           push: true
