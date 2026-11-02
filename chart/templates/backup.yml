@@ -53,3 +53,20 @@ spec:
               volumeMounts:
                 - name: backup-files
                   mountPath: /backup
+            {{- if .Values.backup.local.enabled }}
+            # Second copy to MinIO on docker-services; needs the minio-backup Secret
+            - name: upload-local
+              image: amazon/aws-cli:2.39.3
+              command: ["/bin/sh", "-c"]
+              args:
+                - aws s3 cp /backup/dump.sql.gz s3://{{ .Values.backup.local.bucket }}/pg-`date +%Y-%m-%d-%H%M`.sql.gz --endpoint-url {{ .Values.backup.local.endpoint }}
+              env:
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.backup.local.region | quote }}
+              envFrom:
+                - secretRef:
+                    name: minio-backup
+              volumeMounts:
+                - name: backup-files
+                  mountPath: /backup
+            {{- end }}
