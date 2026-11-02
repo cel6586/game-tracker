@@ -8,3 +8,8 @@ api:
 web:
   image: ghcr.io/cel6586/game-tracker-web
   replicas: 2
+
+backup:
+  schedule: "0 3 * * *"
+  bucket: craig-homelab-pg-backup-000978831369-us-east-2-an
+  region: us-east-2
