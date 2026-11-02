@@ -1,0 +1,55 @@
+# Backup of the gametracker database every night, uploaded to S3.
+# Retention (30 days) is an S3 lifecycle rule on the bucket, not defined in this repo.
+# Requires the aws-backup Secret in the game-tracker namespace.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-backup
+  namespace: game-tracker
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          volumes:
+            - name: backup-files
+              emptyDir: {}
+          initContainers:
+            - name: pg-dump
+              # Keep version in line with the server version in postgres.yml
+              image: postgres:17
+              command: ["/bin/bash", "-c"]
+              args:
+                # pipefail: a failed pg_dump must fail the job instead of uploading an empty file
+                - set -euo pipefail; pg_dump -h db -U gtadmin gametracker | gzip > /backup/dump.sql.gz
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: game-tracker-secrets
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: backup-files
+                  mountPath: /backup
+          containers:
+            - name: upload
+              image: amazon/aws-cli:2.39.3
+              command: ["/bin/sh", "-c"]
+              args:
+                - aws s3 cp /backup/dump.sql.gz s3://{{ .Values.backup.bucket }}/pg-`date +%Y-%m-%d-%H%M`.sql.gz
+              env:
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.backup.region | quote }}
+              # AWS key pair; the aws-backup Secret is applied by hand and is not in git
+              envFrom:
+                - secretRef:
+                    name: aws-backup
+              volumeMounts:
+                - name: backup-files
+                  mountPath: /backup
