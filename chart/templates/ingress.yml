@@ -3,8 +3,14 @@ kind: Ingress
 metadata:
   name: game-tracker
   namespace: game-tracker
+  annotations:
+    cert-manager.io/cluster-issuer: homelab-ca
 spec:
   ingressClassName: traefik
+  tls:
+    - secretName: game-tracker-tls
+      hosts:
+        - game-tracker.homelab.internal
   rules:
     - host: game-tracker.homelab.internal
       http:
