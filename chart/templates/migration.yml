@@ -11,7 +11,7 @@ spec:
     spec:
       restartPolicy: Never
       imagePullSecrets:
-        - name: ghcr-pull
+        - name: {{ .Values.pullSecret }}
       containers:
         - name: migrate-db
           image: {{ .Values.api.image }}:{{ .Values.image.tag }}
