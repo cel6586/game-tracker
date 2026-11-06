@@ -43,7 +43,9 @@ build:
 # Manual until the GitHub deploy is retired, so the two don't deploy over each other.
 deploy:
   stage: deploy
-  tags: [homelab]
+  image:
+    name: alpine/helm:3.16.2
+    entrypoint: [""]
   needs: [build]
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -51,6 +53,7 @@ deploy:
   script:
     - >
       helm upgrade --install game-tracker chart
+      --kube-context craig-homelab/game-tracker:homelab
       --namespace game-tracker
       --create-namespace
       --set api.image=$API_IMAGE
