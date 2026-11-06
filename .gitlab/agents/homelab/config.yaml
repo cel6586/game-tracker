@@ -1,0 +1,4 @@
+# lets this project's CI jobs use the homelab agent to reach the cluster
+ci_access:
+  projects:
+    - id: craig-homelab/game-tracker
