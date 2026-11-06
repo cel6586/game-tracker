@@ -1,0 +1,8 @@
+# GitLab version of the pipeline. Ported from .github/workflows/build.yml one job at a time.
+test:
+  image: python:3.13
+  script:
+    - cd api
+    - pip install -r requirements-dev.txt
+    - pytest
+    - ruff check .
