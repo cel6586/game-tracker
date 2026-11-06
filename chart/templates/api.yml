@@ -14,7 +14,7 @@ spec:
         app: game-tracker-api
     spec:
       imagePullSecrets:
-        - name: ghcr-pull
+        - name: {{ .Values.pullSecret }}
       containers:
         - name: api
           image: {{ .Values.api.image }}:{{ .Values.image.tag }}

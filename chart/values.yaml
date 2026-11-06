@@ -1,6 +1,9 @@
 image:
   tag: f39c1cba5ec97ab16e509354718c33afc57f2264
 
+# which registry login the pods use to pull images. GitLab deploys set this to gitlab-pull
+pullSecret: ghcr-pull
+
 api:
   image: ghcr.io/cel6586/game-tracker-api
   replicas: 2
