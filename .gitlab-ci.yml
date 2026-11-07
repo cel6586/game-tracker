@@ -51,6 +51,8 @@ deploy:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
   script:
+    # helm doesn't use the runner's CA file by itself, so point it at it
+    - export SSL_CERT_FILE=$CI_SERVER_TLS_CA_FILE
     - >
       helm upgrade --install game-tracker chart
       --kube-context craig-homelab/game-tracker:homelab
