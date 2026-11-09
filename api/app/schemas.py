@@ -6,15 +6,18 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 class GameCreate(BaseModel):
     """ Schema for creating a new game """
-    title: str = Field(min_length=1)
+    title: str = Field(min_length=1, max_length=200)
     platform: Literal["PS5", "Xbox", "Switch 2", "PC", "VR", "Other"]
     status: Literal["wishlist", "completed", "playing"] = "wishlist"
     release_date: date | None = None
-    developer: str | None = Field(default=None, description="The developer of the game")
+    developer: str | None = Field(default=None, max_length=200,
+                                  description="The developer of the game")
     rating: float | None = Field(default=None, ge=0, le=10,
                                  description="The users rating of the game")
-    link: str | None = Field(default=None, description="Link to games storefront")
-    notes: str | None = Field(default=None, description="Users notes of the game")
+    link: str | None = Field(default=None, max_length=500,
+                             description="Link to games storefront")
+    notes: str | None = Field(default=None, max_length=5000,
+                              description="Users notes of the game")
     favorite: bool = Field(default=False, description="Favorited game")
 
     @field_validator("link")
@@ -46,14 +49,14 @@ class GameList(BaseModel):
 
 class GameUpdate(BaseModel):
     """ Schema for updating an existing game """
-    title: str | None = Field(default=None, min_length=1)
+    title: str | None = Field(default=None, min_length=1, max_length=200)
     platform: Literal["PS5", "Xbox", "Switch 2", "PC", "VR", "Other"] | None = None
     status: Literal["wishlist", "completed", "playing"] | None = None
     release_date: date | None = None
-    developer: str | None = None
+    developer: str | None = Field(default=None, max_length=200)
     rating: float | None = Field(default=None, ge=0, le=10)
-    link: str | None = None
-    notes: str | None = None
+    link: str | None = Field(default=None, max_length=500)
+    notes: str | None = Field(default=None, max_length=5000)
     favorite: bool | None = None
 
     @field_validator("title", "platform", "status", "favorite")
@@ -81,14 +84,15 @@ class GameSummary(BaseModel):
 class UserCreate(BaseModel):
     """ Schema for creating a new user """
     email: EmailStr
-    password: str = Field(min_length=8)
-    name: str | None = None
+    signup_code: str = Field(max_length=100)
+    password: str = Field(min_length=8, max_length=128)
+    name: str | None = Field(default=None, max_length=200)
 
 
 class UserUpdate(BaseModel):
     """ Schema for updating an existing user email and name """
     email: EmailStr | None = None
-    name: str | None = None
+    name: str | None = Field(default=None, max_length=200)
 
     @field_validator("email")
     @classmethod
@@ -99,8 +103,8 @@ class UserUpdate(BaseModel):
 
 class PasswordUpdate(BaseModel):
     """ Schema for updating an existing user password """
-    current_password: str
-    new_password: str = Field(min_length=8)
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class UserOutput(BaseModel):

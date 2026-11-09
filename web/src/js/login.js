@@ -27,6 +27,8 @@ export function renderLogin(root, onSignedIn) {
   const name = field("login-name", "Name (optional)", "text", { autocomplete: "name", maxlength: "200", required: false, placeholder: "Your name" });
   const email = field("login-email", "Email", "email", { autocomplete: "email", placeholder: "you@example.com" });
   const password = field("login-password", "Password", "password", { placeholder: "Your password" });
+  // Only shown on the Create account tab. The API refuses sign-up without the right code.
+  const invite = field("login-invite", "Invite code", "text", { autocomplete: "off", required: false, placeholder: "From whoever invited you" });
   const banner = el("div", { className: "banner", attrs: { role: "alert", hidden: true } });
   const submit = el("button", { className: "btn btn-primary", attrs: { type: "submit" } });
 
@@ -39,6 +41,8 @@ export function renderLogin(root, onSignedIn) {
     registerTab.setAttribute("aria-pressed", String(mode === "register"));
     submit.textContent = mode === "signin" ? "Sign in" : "Create account";
     name.wrapper.hidden = mode !== "register";
+    invite.wrapper.hidden = mode !== "register";
+    invite.input.required = mode === "register";
     password.input.autocomplete = mode === "signin" ? "current-password" : "new-password";
     // The API requires 8+ characters for a new password (not for signing in).
     if (mode === "register") password.input.setAttribute("minlength", "8");
@@ -48,14 +52,14 @@ export function renderLogin(root, onSignedIn) {
   signinTab.addEventListener("click", () => setMode("signin"));
   registerTab.addEventListener("click", () => setMode("register"));
 
-  const form = el("form", { attrs: { novalidate: false } }, name.wrapper, email.wrapper, password.wrapper, banner, submit);
+  const form = el("form", { attrs: { novalidate: false } }, name.wrapper, email.wrapper, password.wrapper, invite.wrapper, banner, submit);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     banner.hidden = true;
     submit.disabled = true;
     try {
       if (mode === "register") {
-        await register(email.input.value, password.input.value, name.input.value);
+        await register(email.input.value, password.input.value, name.input.value, invite.input.value);
         // The account exists now. If the login below fails, a retry must not register again (409).
         setMode("signin");
       }

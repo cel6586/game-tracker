@@ -1,3 +1,4 @@
+import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -46,3 +47,9 @@ def get_current_user(token: str = Depends(oauth2_scheme),
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     return user
+
+def check_signup_code(code: str) -> bool:
+    """ Checks if signup code matches our secrets signup code"""
+    if not settings.signup_code:
+        return False
+    return secrets.compare_digest(code.encode(), settings.signup_code.encode())

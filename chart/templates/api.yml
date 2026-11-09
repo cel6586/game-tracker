@@ -18,6 +18,12 @@ spec:
       containers:
         - name: api
           image: {{ .Values.api.image }}:{{ .Values.image.tag }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 8000
           env:
@@ -33,6 +39,12 @@ spec:
                 secretKeyRef:
                   name: game-tracker-secrets
                   key: SECRET_KEY
+            - name: SIGNUP_CODE
+              valueFrom:
+                secretKeyRef:
+                  name: game-tracker-secrets
+                  key: SIGNUP_CODE
+                  optional: true
 ---
 apiVersion: v1
 kind: Service

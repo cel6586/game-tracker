@@ -1,10 +1,11 @@
 """Shared test setup. Every test gets a brand-new empty in-memory SQLite database."""
 import os
 
-# Settings() runs when app.config is imported, and it needs these two values.
+# Settings() runs when app.config is imported, and it needs these values.
 # They must be set BEFORE any "from app..." import below.
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-real-use")
+os.environ.setdefault("SIGNUP_CODE", "test-signup-code")
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,6 +19,7 @@ from app.main import app
 
 API = "/api/v1"
 PASSWORD = "password123"
+SIGNUP_CODE = "test-signup-code"
 
 
 @pytest.fixture
@@ -64,7 +66,10 @@ def client(db_engine):
 
 def register_and_login(client, email, password=PASSWORD):
     """Creates a user and returns the Authorization header for them."""
-    client.post(f"{API}/auth/register", json={"email": email, "password": password})
+    client.post(
+        f"{API}/auth/register",
+        json={"email": email, "password": password, "signup_code": SIGNUP_CODE},
+    )
     # Login is a form post, and the email goes in the "username" field.
     response = client.post(
         f"{API}/auth/login", data={"username": email, "password": password}

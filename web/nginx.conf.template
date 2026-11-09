@@ -9,6 +9,9 @@ server {
 
     server_tokens off;
 
+    # Requests here are tiny JSON. Refuse anything bigger than 64 KB (default is 1 MB).
+    client_max_body_size 64k;
+
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "no-referrer" always;
