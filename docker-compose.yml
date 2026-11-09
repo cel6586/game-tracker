@@ -20,6 +20,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://gtadmin:${POSTGRES_PASSWORD}@db:5432/gametracker
       SECRET_KEY: ${SECRET_KEY}
+      SIGNUP_CODE: ${SIGNUP_CODE}
     depends_on:
       db:
         condition: service_healthy

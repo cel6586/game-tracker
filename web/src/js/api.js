@@ -50,9 +50,9 @@ async function request(path, { method = "GET", body, form = false, auth = true }
 }
 
 // ---- auth ----
-export function register(email, password, name = "") {
+export function register(email, password, name = "", inviteCode = "") {
   // The name is optional, so a blank one is left out instead of sent as "".
-  const body = { email, password, ...(name.trim() ? { name: name.trim() } : {}) };
+  const body = { email, password, signup_code: inviteCode, ...(name.trim() ? { name: name.trim() } : {}) };
   return request("/auth/register", { method: "POST", body, auth: false });
 }
 

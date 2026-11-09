@@ -18,6 +18,12 @@ spec:
       containers:
         - name: web
           image: {{ .Values.web.image }}:{{ .Values.image.tag }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - containerPort: 8080
 ---
