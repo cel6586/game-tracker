@@ -16,9 +16,9 @@ backup:
   schedule: "0 3 * * *"
   bucket: craig-homelab-pg-backup-000978831369-us-east-2-an
   region: us-east-2
-  # Second copy on the docker-services VM (MinIO, S3-compatible). Off until it is set up.
+  # Second copy on the docker-services VM (garage)
   local:
-    enabled: false
-    endpoint: http://10.0.0.252:9000
+    enabled: true
+    endpoint: http://10.0.0.252:3900
     bucket: pg-backups
-    region: us-east-1
+    region: garage

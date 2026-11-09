@@ -1,0 +1,8 @@
+{
+  "auths": {
+    "registry.homelab.internal": {
+      "username": "PUT-DEPLOY-TOKEN-USERNAME-HERE",
+      "password": "PUT-DEPLOY-TOKEN-HERE"
+    }
+  }
+}
