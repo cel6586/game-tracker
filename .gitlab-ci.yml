@@ -24,6 +24,7 @@ secret-scan:
     GIT_DEPTH: 0
   script:
     - gitleaks detect --source . --verbose
+    
 
 # Runs by itself on main.
 build:
