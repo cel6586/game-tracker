@@ -2,8 +2,8 @@
 // Pop-up windows: confirm, add game, game details. All use the built-in <dialog>
 // element, which traps keyboard focus and closes on Escape for us.
 
-import { createGame, deleteGame, updateGame } from "./api.js";
-import { el, PLATFORMS, STATUSES, capitalize, daysUntil, icon, isSafeUrl, platformBadge } from "./util.js";
+import { createGame, deleteGame, searchGames, updateGame } from "./api.js";
+import { el, PLATFORMS, STATUSES, capitalize, daysUntil, icon, isSafeUrl, platformBadge, platformInfo } from "./util.js";
 
 function openDialog(dialog) {
   document.body.append(dialog);
@@ -149,6 +149,8 @@ export function openGameDialog(game, { onSaved, onDeleted }) {
   const dialog = el("dialog", { attrs: { "aria-label": isEdit ? "Game details" : "Add game" } });
   const banner = el("div", { className: "banner", attrs: { role: "alert", hidden: true } });
   const { fields, grid } = buildForm();
+  // Values that have no input in the form. The search fills them in when a game is picked.
+  const picked = { cover_url: null, igdb_id: null };
   const form = el("form", { attrs: { novalidate: true } });
 
   const save = el("button", { className: "btn btn-primary", text: isEdit ? "Save changes" : "Add game", attrs: { type: "submit" } });
@@ -176,6 +178,8 @@ export function openGameDialog(game, { onSaved, onDeleted }) {
     event.preventDefault();
     clearErrors(fields, banner);
     const values = readForm(fields);
+    // Only for add. An edit leaves the cover and IGDB id alone.
+    if (!isEdit) Object.assign(values, picked);
     if (!validateLocally(values, fields)) return;
     save.disabled = true;
     try {
@@ -191,17 +195,125 @@ export function openGameDialog(game, { onSaved, onDeleted }) {
   });
 
   form.append(banner, grid, actions);
-  dialog.append(isEdit ? detailsHead(game, onSaved) : addHead(), form);
+  dialog.append(isEdit ? detailsHead(game, onSaved) : addHead(fields, picked), form);
   if (isEdit) fillForm(fields, game);
   openDialog(dialog);
 }
 
-function addHead() {
-  // Placeholder until the RAWG search exists (needs a backend endpoint first).
-  // When it does: show results here plus a "Game data from RAWG" link, which RAWG requires.
-  const search = el("input", { attrs: { id: "game-find", type: "search", disabled: true, placeholder: "Search coming soon" } });
+// One row in the search results: cover, title, year and platform.
+// One platform (or needPlatform false): the whole row is the button. Several: each
+// platform gets its own button, so the user has to pick one and cant skip past it.
+function resultRow(game, onPick, needPlatform) {
+  const cover = isSafeUrl(game.cover_url)
+    ? el("img", { className: "result-cover", attrs: { src: game.cover_url, alt: "", loading: "lazy" } })
+    : el("div", { className: "result-cover" });
+  const year = game.release_date ? game.release_date.slice(0, 4) : "no date";
+  const text = el("div", { className: "result-text" }, el("b", { text: game.title }));
+
+  if (!needPlatform || game.platforms.length === 1) {
+    const platform = game.platforms[0];
+    const where = needPlatform ? platformInfo(platform).label : game.platforms.map((p) => platformInfo(p).label).join(", ");
+    text.append(el("small", { text: `${year} · ${where}` }));
+    const row = el("button", { className: "search-result clickable", attrs: { type: "button" } }, cover, text);
+    row.addEventListener("click", () => onPick(game, platform));
+    return el("li", {}, row);
+  }
+
+  const chips = el("div", { className: "platform-chips" });
+  for (const platform of game.platforms) {
+    const chip = el("button", { className: "platform-chip", text: platformInfo(platform).label, attrs: { type: "button" } });
+    chip.addEventListener("click", () => onPick(game, platform));
+    chips.append(chip);
+  }
+  text.append(el("small", { text: `${year} · pick a platform:` }), chips);
+  return el("li", {}, el("div", { className: "search-result" }, cover, text));
+}
+
+// Search box, status line and results list. Enter runs the search. onPick(game, platform, status)
+// runs when the user picks a result. needPlatform false means only the cover matters
+// (find cover), so games without a cover are hidden and no platform is asked for.
+// TODO: check if IGDB wants a credit link shown near the results.
+function searchPanel(onPick, { needPlatform = true, id } = {}) {
+  const search = el("input", { attrs: { id, type: "search", autocomplete: "off", placeholder: "Type a game name and press Enter" } });
+  const status = el("div", { className: "search-status", attrs: { "aria-live": "polite" } });
+  const results = el("ul", { className: "search-results" });
+  let latest = 0; // a slow search that finishes after a newer one gets ignored
+
+  function pick(game, platform) {
+    results.replaceChildren();
+    onPick(game, platform, status);
+  }
+
+  async function runSearch() {
+    const text = search.value.trim();
+    results.replaceChildren();
+    if (text.length < 2) {
+      status.textContent = "Enter at least 2 characters.";
+      return;
+    }
+    const mine = ++latest;
+    status.textContent = "Searching...";
+    try {
+      const games = await searchGames(text);
+      if (mine !== latest) return;
+      const shown = needPlatform ? games : games.filter((game) => game.cover_url);
+      if (shown.length === 0) {
+        status.textContent = "No games found.";
+        return;
+      }
+      status.textContent = needPlatform
+        ? `${shown.length} found. Click a platform to pick a game.`
+        : `${shown.length} found. Click one to use its cover.`;
+      for (const game of shown) results.append(resultRow(game, pick, needPlatform));
+    } catch (error) {
+      if (mine !== latest) return;
+      status.textContent = error.status === 502 ? "Game search is unavailable right now." : error.message;
+    }
+  }
+
+  search.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      runSearch();
+    }
+  });
+
+  return { search, status, results, runSearch };
+}
+
+// Search at the top of the add window. Picking a result fills the form.
+function addHead(fields, picked) {
+  const preview = el("img", { className: "pick-cover", attrs: { alt: "Cover of the picked game" } });
+  preview.hidden = true;
+
+  const panel = searchPanel((game, platform, status) => {
+    fields.title.input.value = game.title;
+    fields.release_date.input.value = game.release_date || "";
+    fields.developer.input.value = game.developer || "";
+    fields.platform.input.value = platform;
+    picked.cover_url = game.cover_url;
+    picked.igdb_id = game.igdb_id;
+    status.textContent = `Filled in "${game.title}" for ${platformInfo(platform).label}.`;
+    if (isSafeUrl(game.cover_url)) {
+      preview.src = game.cover_url;
+      preview.hidden = false;
+    } else {
+      preview.hidden = true;
+    }
+  }, { id: "game-find" });
+
   return el("div", {}, el("h2", { text: "Add game" }),
-    el("div", { className: "field", attrs: { style: "margin-top: 14px" } }, el("label", { text: "Find a game", attrs: { for: "game-find" } }), search));
+    el("div", { className: "field", attrs: { style: "margin-top: 14px" } },
+      el("label", { text: "Find a game", attrs: { for: "game-find" } }), panel.search,
+      el("div", { className: "pick-row" }, preview, panel.status)),
+    panel.results);
+}
+
+// The cover picture, or the grey placeholder when the game has none.
+function coverImage(game) {
+  return isSafeUrl(game.cover_url)
+    ? el("img", { className: "cover-img", attrs: { src: game.cover_url, alt: `Cover of ${game.title}` } })
+    : el("div", { className: "cover-slot", text: "Cover art" });
 }
 
 function detailsHead(game, onSaved) {
@@ -216,13 +328,40 @@ function detailsHead(game, onSaved) {
       // The list screen shows errors; here a failed toggle just stays unchanged.
     }
   });
+
+  // Find cover: same IGDB search, but picking a result only saves its cover and IGDB id.
+  const coverBox = el("div", {}, coverImage(game));
+  const findButton = el("button", { className: "btn", text: game.cover_url ? "Change cover" : "Find cover", attrs: { type: "button" } });
+  const panel = searchPanel(async (found, _platform, status) => {
+    try {
+      const saved = await updateGame(game.id, { cover_url: found.cover_url, igdb_id: found.igdb_id });
+      game.cover_url = saved.cover_url;
+      coverBox.replaceChildren(coverImage(game));
+      findButton.textContent = "Change cover";
+      status.textContent = `Cover saved from "${found.title}".`;
+      onSaved(saved);
+    } catch (error) {
+      status.textContent = error.message;
+    }
+  }, { needPlatform: false, id: "cover-find" });
+  const finder = el("div", { className: "field finder" },
+    el("label", { text: "Search for a cover", attrs: { for: "cover-find" } }), panel.search, panel.status, panel.results);
+  finder.hidden = true;
+  findButton.addEventListener("click", () => {
+    finder.hidden = !finder.hidden;
+    if (finder.hidden) return;
+    panel.search.value = game.title;
+    panel.runSearch();
+    panel.search.focus();
+  });
+
   const head = el("div", { className: "dialog-head" },
-    el("div", { className: "cover-slot", text: "Cover art" }),
-    el("div", {}, platformBadge(game.platform, { big: true }), el("h2", { text: game.title })),
+    coverBox,
+    el("div", {}, platformBadge(game.platform, { big: true }), el("h2", { text: game.title }), findButton),
     heart);
   const days = daysUntil(game.release_date);
   if (days !== null && days > 0) {
     head.append(el("div", { className: "countdown-box" }, el("b", { text: String(days) }), el("span", { text: days === 1 ? "day to go" : "days to go" })));
   }
-  return head;
+  return el("div", {}, head, finder);
 }

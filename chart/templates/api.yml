@@ -45,6 +45,18 @@ spec:
                   name: game-tracker-secrets
                   key: SIGNUP_CODE
                   optional: true
+            - name: IGDB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: game-tracker-secrets
+                  key: IGDB_CLIENT_ID
+                  optional: true
+            - name: IGDB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: game-tracker-secrets
+                  key: IGDB_CLIENT_SECRET
+                  optional: true
 ---
 apiVersion: v1
 kind: Service

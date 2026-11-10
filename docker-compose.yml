@@ -1,3 +1,6 @@
+# local dev setup: db, api and web. run with docker compose up -d --build
+# reads POSTGRES_PASSWORD, SECRET_KEY, SIGNUP_CODE and the IGDB values from .env
+# the cluster doesn't use this file, it uses the helm chart
 services:
   db:
     image: postgres:17
@@ -21,6 +24,9 @@ services:
       DATABASE_URL: postgresql+psycopg://gtadmin:${POSTGRES_PASSWORD}@db:5432/gametracker
       SECRET_KEY: ${SECRET_KEY}
       SIGNUP_CODE: ${SIGNUP_CODE}
+      # only for the game search
+      IGDB_CLIENT_ID: ${IGDB_CLIENT_ID}
+      IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
     depends_on:
       db:
         condition: service_healthy

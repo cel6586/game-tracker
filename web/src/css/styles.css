@@ -454,8 +454,31 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
   display: grid; place-items: center;
   color: var(--muted); font-size: 0.7rem; text-align: center;
 }
+.cover-img { width: 72px; height: 96px; flex: none; object-fit: cover; border-radius: 10px; }
 .countdown-box { margin-left: auto; text-align: center; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; }
 .countdown-box b { display: block; font-size: 1.5rem; font-family: "Space Grotesk", sans-serif; }
+
+/* ---------- Game search (add game window) ---------- */
+.search-status { color: var(--muted); font-size: 0.8125rem; min-height: 1.2em; }
+.pick-row { display: flex; gap: 12px; align-items: center; }
+.pick-cover { width: 48px; height: 64px; flex: none; object-fit: cover; border-radius: 6px; }
+/* The window gets wider while there are results to show. */
+dialog:has(.search-results:not(:empty)) { width: min(720px, calc(100vw - 24px)); }
+.search-results { list-style: none; margin: 0 0 14px; padding: 0; max-height: 50vh; overflow-y: auto; border: 1px solid var(--border-soft); border-radius: 10px; }
+.search-results:empty { display: none; }
+.search-results li + li { border-top: 1px solid var(--border-faint); }
+.search-result { display: flex; gap: 12px; align-items: center; padding: 10px 12px; }
+.dialog-head .btn { margin-top: 8px; padding: 4px 12px; font-size: 0.8125rem; min-height: 0; }
+.finder { margin-bottom: 16px; }
+/* One platform: the whole row is a button. */
+.search-result.clickable { width: 100%; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.search-result.clickable:hover, .search-result.clickable:focus-visible { background: var(--raised); }
+.result-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.result-text small { color: var(--muted); }
+.result-cover { width: 48px; height: 64px; flex: none; object-fit: cover; border-radius: 4px; background: var(--raised); }
+.platform-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.platform-chip { padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--raised); color: var(--text); font: inherit; font-size: 0.75rem; cursor: pointer; }
+.platform-chip:hover, .platform-chip:focus-visible { border-color: var(--accent); }
 
 /* ---------- Settings (centered in the page) ---------- */
 .settings-page { max-width: 720px; margin: 0 auto; }

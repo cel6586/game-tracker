@@ -1,9 +1,12 @@
+""" Models for database tables """
+
 from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -31,12 +34,14 @@ class Game(Model):
     """ Model for our video games table. Video games will be assigned to a user
      From the User table """
     __tablename__ = "games"
+    # a user can add the same title once per platform
     __table_args__ = (
         UniqueConstraint("user_id", "title", "platform",
                          name="uq_games_user_title_platform"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # cascade so deleting a user also deletes their games
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
@@ -49,6 +54,9 @@ class Game(Model):
     notes: Mapped[str | None] = mapped_column(Text)
     link: Mapped[str | None] = mapped_column(String(500))
     favorite: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    # cover_url and igdb_id only get filled when a game is picked from the IGDB search
+    cover_url: Mapped[str | None] = mapped_column(String(500))
+    igdb_id: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
