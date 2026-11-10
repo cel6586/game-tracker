@@ -1,3 +1,5 @@
+""" Schemas for the data coming in and out of the api """
+
 from datetime import date
 from typing import Literal
 
@@ -7,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 class GameCreate(BaseModel):
     """ Schema for creating a new game """
     title: str = Field(min_length=1, max_length=200)
+    # keep in sync with the web dropdown and PLATFORM_MAP in igdb.py
     platform: Literal["PS5", "Xbox", "Switch 2", "PC", "VR", "Other"]
     status: Literal["wishlist", "completed", "playing"] = "wishlist"
     release_date: date | None = None
@@ -19,8 +22,11 @@ class GameCreate(BaseModel):
     notes: str | None = Field(default=None, max_length=5000,
                               description="Users notes of the game")
     favorite: bool = Field(default=False, description="Favorited game")
+    cover_url: str | None = Field(default=None, max_length=500)
+    igdb_id: int | None = None
 
-    @field_validator("link")
+    # only http and https
+    @field_validator("link", "cover_url")
     @classmethod
     def check_link(cls, value):
         if value is not None and not value.lower().startswith(("http://", "https://")):
@@ -41,6 +47,7 @@ class GameOutput(BaseModel):
     link: str | None
     notes: str | None
     favorite: bool = False
+    cover_url: str | None
 
 
 class GameList(BaseModel):
@@ -58,7 +65,10 @@ class GameUpdate(BaseModel):
     link: str | None = Field(default=None, max_length=500)
     notes: str | None = Field(default=None, max_length=5000)
     favorite: bool | None = None
+    cover_url: str | None = Field(default=None, max_length=500)
+    igdb_id: int | None = None
 
+    # these columns cant be empty
     @field_validator("title", "platform", "status", "favorite")
     @classmethod
     def not_null(cls, value):
@@ -66,7 +76,7 @@ class GameUpdate(BaseModel):
             raise ValueError("Cannot be null")
         return value
 
-    @field_validator("link")
+    @field_validator("link", "cover_url")
     @classmethod
     def check_link(cls, value):
         if value is not None and not value.lower().startswith(("http://", "https://")):

@@ -1,12 +1,13 @@
 from datetime import date
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.igdb import IGDBError, game_query
 from app.models import Game, User
 from app.schemas import GameCreate, GameList, GameOutput, GameSummary, GameUpdate
 from app.security import get_current_user
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/games", tags=["games"])
 
 def get_user_game(game_id: int, user: User, db: Session):
     """  Helper that returns a game specific to a user"""
+    # filtering on user_id means someone elses game just looks like it doesnt exist
     return db.scalars(
         select(Game).where(Game.id == game_id, Game.user_id == user.id)).first()
 
@@ -33,16 +35,19 @@ def list_games(search: str | None = None, platform: str | None = None,
     """ Returns a list of all games that belong to the current user. """
     query = select(Game).where(Game.user_id == user.id)
     if search:
+        # ilike is a case insensitive LIKE, the % lets it match anywhere in the title
         query = query.where(Game.title.ilike(f"%{search}%"))
     if platform:
         query = query.where(Game.platform == platform)
     if status:
         query = query.where(Game.status == status)
+    # released only keeps games with a date that has already passed
     if released:
         query = query.where(Game.release_date <= date.today())
     if favorite:
         query = query.where(Game.favorite == favorite)
 
+    # no release date goes last, title and id break ties so the order stays stable
     if sort == "released":
         query =query.order_by(Game.release_date.asc().nulls_last(), Game.title, Game.id)
     else:
@@ -71,6 +76,7 @@ def game_summary(user: User = Depends(get_current_user), db: Session = Depends(g
     """ Returns statistics about the current user's games """
     game_count = db.scalar(select(func.count()).select_from(
         Game).where(Game.user_id == user.id))
+    # group_by gives one row per platform / status with how many games it has
     platform_count = db.execute(select(Game.platform, func.count()).where(
         Game.user_id == user.id).group_by(Game.platform)).all()
     status_count = db.execute(select(Game.status, func.count()).where(
@@ -78,6 +84,19 @@ def game_summary(user: User = Depends(get_current_user), db: Session = Depends(g
     platform_dict = {platform: count for platform, count in platform_count}
     status_dict = {status: count for status, count in status_count}
     return {"total": game_count, "by_platform": platform_dict, "by_status": status_dict}
+
+# has to stay above /{game_id} or "search" gets read as a game id.
+# login is required so nobody else can use up our IGDB requests
+@router.get("/search", dependencies=[Depends(get_current_user)])
+def search_game(game: str = Query(min_length=2, max_length=100)):
+    keyword_search = game.strip()
+    if not keyword_search or len(keyword_search) < 2:
+        raise HTTPException(status_code=422, detail="Search text is too short")
+    try:
+        return game_query(keyword_search)
+    except IGDBError:
+        raise HTTPException(status_code=502, detail="Game search not available")
+
 
 @router.get("/{game_id}", response_model=GameOutput)
 def game_details(game_id: int, user:User = Depends(get_current_user),
@@ -115,6 +134,8 @@ def update_game(game_id: int, data: GameUpdate, user: User = Depends(get_current
             status_code=409, detail="You already added this game for this system")
     db.refresh(game)
     return game
+
+
 
 
 

@@ -1,3 +1,6 @@
+""" Security for API.  Password encryption, token to verify
+    users, and code verification """
+
 import secrets
 from datetime import UTC, datetime, timedelta
 
@@ -27,6 +30,7 @@ def create_token(user_id: int) -> str:
     """ Creates a JWT token for a logged in user"""
     expires = (datetime.now(UTC) +
                timedelta(minutes=settings.access_token_expire_minutes))
+    # sub is the user id, jwt checks exp when decoding
     payload = {"sub": str(user_id), "exp": expires}
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
@@ -43,6 +47,7 @@ def get_current_user(token: str = Depends(oauth2_scheme),
     except (jwt.InvalidTokenError, KeyError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+    # look the user up every time so a deleted account stops working right away
     user = db.scalars(select(User).where(User.id == user_id)).first()
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")

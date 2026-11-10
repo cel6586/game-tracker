@@ -87,6 +87,9 @@ export async function listGames(params = {}) {
 // Unfiltered counts: {total, by_status: {playing: 2, ...}, by_platform: {PC: 3, ...}}.
 // Not in the API yet, see "Backend changes" in design.md.
 export const getGameSummary = () => request("/games/summary");
+// IGDB search through our API. Gives back a list of
+// {igdb_id, title, release_date, cover_url, platforms, developer}.
+export const searchGames = (text) => request(`/games/search?${new URLSearchParams({ game: text })}`);
 export const createGame = (game) => request("/games/", { method: "POST", body: game });
 export const updateGame = (id, fields) => request(`/games/${id}`, { method: "PATCH", body: fields });
 export const deleteGame = (id) => request(`/games/${id}`, { method: "DELETE" });
